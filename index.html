@@ -3511,6 +3511,7 @@ const DEMO_ONLY = true;
    each AI feature says how to get it instead (aiGate), and files save straight from the browser. */
 const STANDALONE = true;
 const DEMO_URL = 'https://claude.ai/artifact/H42sKKVWpFeTRwiRH1PVz4';   // Basis Demo in Claude
+const PUBLIC_URL = 'https://ssmall87.github.io/basis-demo/';   // the stand-alone demo on the web, for people with no Claude account
 const CLAUDE_LOGIN = 'https://claude.ai/login';   // signs in, or makes a free account for a new email
 const shareURL = () => STANDALONE && /^https?:/.test(location.protocol) ? location.href.split('#')[0] : DEMO_URL;
 /* shown over whatever is open (a half-filled form stays as it was) */
@@ -3569,10 +3570,14 @@ function demoHighlights(){
 function demoShare(){
   closeMenu();
   openForm({title:'Share the demo', fields:[], focus:false, closeLabel:'Done',
-    intro:`Anyone you send this link to gets their own copy of the demo: the same made-up records, nothing saved, and no way into the real Basis.${STANDALONE ? ' No Claude account is needed to open it.' : ''}`,
+    intro:STANDALONE ? 'Anyone you send this link to gets their own copy of the demo: the same made-up records, nothing saved, and no way into the real Basis. No Claude account is needed to open it.'
+      : 'Two links to the same demo: made-up records, nothing saved, and no way into the real Basis. Send the public one to anyone; the Claude one is for people with a Claude account.',
     extra:STANDALONE && !/^https?:/.test(location.protocol) ? '<p class="note-box">This copy is open from a file, so it has no link yet. Put it on a website, and the address of that page is the link to send.</p>'
-      : `<div class="f"><label for="demo-link">Link to Basis Demo</label><input type="text" id="demo-link" readonly value="${esc(shareURL())}"></div>
-      <div class="set-list" style="margin-top:10px"><button class="btn primary" data-act="demo-copy">${ic('note')}Copy link</button></div>
+      : `${STANDALONE ? '' : `<div class="f"><label for="demo-link-pub">For anyone, no account needed</label><input type="text" id="demo-link-pub" readonly value="${esc(PUBLIC_URL)}"></div>
+      <div class="set-list" style="margin-top:10px"><button class="btn primary" data-act="demo-copy" data-which="pub">${ic('note')}Copy the public link</button></div>
+      <p class="hint muted" style="font-size:13px;margin:8px 0 16px">The AI features (reading business cards, suggesting boxes over numbers) ask people to sign in to Claude there.</p>`}
+      <div class="f"><label for="demo-link">${STANDALONE ? 'Link to Basis Demo' : 'For people with Claude'}</label><input type="text" id="demo-link" readonly value="${esc(shareURL())}"></div>
+      <div class="set-list" style="margin-top:10px"><button class="btn${STANDALONE ? ' primary' : ''}" data-act="demo-copy">${ic('note')}${STANDALONE ? 'Copy link' : 'Copy the Claude link'}</button></div>
       ${DEMO_ONLY ? '' : `<p class="hint muted" style="font-size:13px;margin-top:12px">The link opens for other people once Basis Demo itself is shared with them, and everyone who opens it needs a Claude account. You do this once: open <a href="${esc(DEMO_URL)}" target="_blank" rel="noopener noreferrer">Basis Demo</a> in a web browser, tap Share at the top of the page, and choose Anyone at your organization, or invite people by email. For people with no Claude account, send the stand-alone demo instead.</p>`}`});
 }
 const DEMO_SWAP = ['people', 'firms', 'exchanges', 'tasks', 'intakes', 'weeks', 'docs', 'buckets', 'serverBuckets', 'shardDocs', 'settings', 'mode', 'canWrite', 'role'];
@@ -6122,7 +6127,7 @@ const ACTIONS = {
   'demo-hi-hide':() => { DEMO_HI = false; demoHiRender(); },
   'dh-deal':el => { if (!DEMO || !S.exchanges.has('dm_x2')) return; openDetail('exchange', 'dm_x2'); if (el.dataset.then === 'sp') spOpen('dm_x2'); else formReqDocs('dm_x2'); },
   'demo-hi':() => { DEMO_HI = !DEMO_HI; demoHiRender(true); },
-  'demo-copy':async () => { const ok = await copyText(shareURL()); if (ok){ toast('Copied the demo link'); return; } const el = $('#demo-link'); if (el){ el.focus(); el.select(); } toast('Copying was blocked here. The link is selected, so copy it by hand.', true); },
+  'demo-copy':async el => { const pub = el.dataset.which === 'pub', ok = await copyText(pub ? PUBLIC_URL : shareURL()); if (ok){ toast(pub ? 'Copied the public link' : 'Copied the demo link'); return; } el = $(pub ? '#demo-link-pub' : '#demo-link'); if (el){ el.focus(); el.select(); } toast('Copying was blocked here. The link is selected, so copy it by hand.', true); },
   'wk-go':el => { if (!isDate(el.dataset.week)) return; const wk = mondayOf(el.dataset.week); if (S.tab === 'weekly' && wk !== weekCur()) NAV.push({tab:'weekly', week:S.f.weekly.week}); S.f.weekly.week = wk; if (!WK.t.size) WK.status = ''; if (S.tab !== 'weekly') setTab('weekly'); else renderView(); },
   'wk-fill':weekFill,
   'wk-pdf':() => weekDownload(weekCur()),
